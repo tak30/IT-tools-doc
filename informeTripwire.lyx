@@ -1,0 +1,699 @@
+#LyX 2.0 created this file. For more info see http://www.lyx.org/
+\lyxformat 413
+\begin_document
+\begin_header
+\textclass article
+\use_default_options true
+\maintain_unincluded_children false
+\language spanish
+\language_package default
+\inputencoding auto
+\fontencoding global
+\font_roman palatino
+\font_sans cmss
+\font_typewriter default
+\font_default_family default
+\use_non_tex_fonts false
+\font_sc false
+\font_osf false
+\font_sf_scale 100
+\font_tt_scale 100
+
+\graphics default
+\default_output_format pdf5
+\output_sync 0
+\bibtex_command default
+\index_command default
+\paperfontsize default
+\spacing single
+\use_hyperref false
+\papersize default
+\use_geometry false
+\use_amsmath 1
+\use_esint 1
+\use_mhchem 1
+\use_mathdots 1
+\cite_engine basic
+\use_bibtopic false
+\use_indices false
+\paperorientation portrait
+\suppress_date false
+\use_refstyle 1
+\index Index
+\shortcut idx
+\color #008000
+\end_index
+\secnumdepth 3
+\tocdepth 3
+\paragraph_separation indent
+\paragraph_indentation default
+\quotes_language english
+\papercolumns 1
+\papersides 1
+\paperpagestyle default
+\tracking_changes false
+\output_changes false
+\html_math_output 0
+\html_css_as_file 0
+\html_be_strict false
+\end_header
+
+\begin_body
+
+\begin_layout Title
+Introducción y primeros pasos con Tripwire
+\end_layout
+
+\begin_layout Author
+Pablo López Viqueira
+\end_layout
+
+\begin_layout Standard
+\begin_inset CommandInset toc
+LatexCommand tableofcontents
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Part
+Introducción
+\end_layout
+
+\begin_layout Section
+¿Qué es Tripwire?
+\end_layout
+
+\begin_layout Paragraph
+Es una herramienta diseñada para sistemas Unix cuya finalidad es la de detectar
+ si ciertos archivos de nuestro sistema han sido modificados sin nuestro
+ permiso.
+\end_layout
+
+\begin_layout Standard
+Es importante resaltar que esta herramienta no reemplaza los sistemas de
+ bloqueo o detección de intrusión tales como firewalls o IDS's, si no que,
+ asumiendo que estos han fallado, revisa nuestro sistema de ficheros en
+ busca de indicios de una posible intrusión.
+\end_layout
+
+\begin_layout Section
+¿Cómo funciona?
+\end_layout
+
+\begin_layout Standard
+Mantiene una base de datos cifrada con el hash
+\begin_inset Foot
+status open
+
+\begin_layout Plain Layout
+En este caso la función hash utilizada es MD5.
+\end_layout
+
+\end_inset
+
+ de cada archivo especificado previamente en su configuración.
+\end_layout
+
+\begin_layout Standard
+De esta forma, cuando posteriormente se ejecute la revisión del sistema,
+ volverá a calcular dichos hash y los comprobará con los almacenados en
+ la base de datos.
+ Si el hash es igual el archivo no ha sido modificado, mientras que si el
+ hash cambia es tarea del administrador investigar si el archivo ha sido
+ modificado debido al natural funcionamiento y actualización del sistema
+ o a una intrusión.
+\end_layout
+
+\begin_layout Section
+Nuestro entorno
+\end_layout
+
+\begin_layout Standard
+Para llevar a cabo este informe se ha utilizado un sistema Raspbian
+\begin_inset Foot
+status open
+
+\begin_layout Plain Layout
+http://es.wikipedia.org/wiki/Raspbian
+\end_layout
+
+\end_inset
+
+ (Debian Wheezy) instalado en una máquina Raspberry Pi Rev2
+\begin_inset Foot
+status open
+
+\begin_layout Plain Layout
+http://es.wikipedia.org/wiki/Raspberry_Pi
+\end_layout
+
+\end_inset
+
+ funcionando a 700 MHz con 512MB de RAM.
+\end_layout
+
+\begin_layout Part
+Instalación y configuración
+\end_layout
+
+\begin_layout Section
+Instalación
+\end_layout
+
+\begin_layout Standard
+El paquete de instalación se encuentra en el repositorio por defecto de
+ Debian, por lo tanto el primer paso es ejecutar 
+\end_layout
+
+\begin_layout Standard
+#apt-get install tripwire
+\end_layout
+
+\begin_layout Standard
+Tripwire trabaja con dos claves imprescindibles para su correcto funcionamiento:
+\end_layout
+
+\begin_layout Itemize
+La 
+\begin_inset Quotes eld
+\end_inset
+
+site key
+\begin_inset Quotes erd
+\end_inset
+
+.
+ Usada para cifrar el fichero de configuración y el de políticas que explicaremo
+s en el apartado de Configuración.
+\end_layout
+
+\begin_layout Itemize
+La 
+\begin_inset Quotes eld
+\end_inset
+
+local key
+\begin_inset Quotes erd
+\end_inset
+
+.
+ Usada para cifrar la base de datos y, opcionalmente, los archivos de reportes.
+\end_layout
+
+\begin_layout Standard
+En la fase de preconfiguración de la instalación del paquete nos preguntará
+ si queremos definir en ese momento las dos claves, nosotros responderemos
+ que sí pero también podríamos definirlas posteriormente.
+\end_layout
+
+\begin_layout Standard
+Una vez finalizada la instalación tendremos que configurar la herramienta.
+\end_layout
+
+\begin_layout Section
+Configuración
+\end_layout
+
+\begin_layout Standard
+Existen dos archivos de configuración de Tripwire:
+\end_layout
+
+\begin_layout Itemize
+El archivo de configuración general: 
+\begin_inset Quotes eld
+\end_inset
+
+twcfg.txt
+\begin_inset Quotes erd
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Itemize
+El archivo de configuración de la política por defecto: 
+\begin_inset Quotes eld
+\end_inset
+
+twpol.txt
+\begin_inset Quotes erd
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+Para configurar Tripwire trabajaremos con estos archivos para, cuando estén
+ correctamente configurados, generar sus respectivos archivos cifrados (
+\begin_inset Quotes eld
+\end_inset
+
+tw.cfg
+\begin_inset Quotes erd
+\end_inset
+
+, 
+\begin_inset Quotes eld
+\end_inset
+
+tw.pol
+\begin_inset Quotes erd
+\end_inset
+
+), que serán los que use Tripwire para su funcionamiento.
+\end_layout
+
+\begin_layout Subsection
+Archivo de configuración general
+\end_layout
+
+\begin_layout Standard
+En este archivo se definen parámetros globales para el funcionamiento de
+ la herramienta, entre ellos se encuentran los siguientes:
+\end_layout
+
+\begin_layout Itemize
+POLFILE -> Ruta al archivo de políticas ya cifrado.
+\end_layout
+
+\begin_layout Itemize
+DBFILE -> Ruta al directorio que contiene las bases de datos (si tenemos
+ varios hosts).
+\end_layout
+
+\begin_layout Itemize
+REPORTFILE -> Ruta all directorio donde se almacenarán los archivos de reportes.
+\end_layout
+
+\begin_layout Itemize
+SITEKEYFILE -> Ruta al archivo que contiene la 
+\begin_inset Quotes eld
+\end_inset
+
+site key
+\begin_inset Quotes erd
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Itemize
+LOCALKEYFILE -> Ruta al archivo que contiene la 
+\begin_inset Quotes eld
+\end_inset
+
+local key
+\begin_inset Quotes erd
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Itemize
+EDITOR -> Representa el editor de texto usado dentro de la aplicación.
+\end_layout
+
+\begin_layout Subsection
+Archivo de políticas
+\end_layout
+
+\begin_layout Standard
+Nos encontramos con un archivo de texto muy grande, existen múltiples parámetros
+ que se pueden modificar, pero nosotros enfocaremos nuestro trabajo en aprender
+ a definir qué archivos revisará Tripwire, el tipo de los mismos y los niveles
+ de severidad de las reglas que los agrupan.
+\end_layout
+
+\begin_layout Subsubsection
+Niveles de severidad
+\end_layout
+
+\begin_layout Standard
+Tripwire permite definir conjuntos de archivos (reglas) que comparten un
+ 
+\begin_inset Quotes eld
+\end_inset
+
+nombre de regla
+\begin_inset Quotes erd
+\end_inset
+
+ y un nivel de severidad.
+\end_layout
+
+\begin_layout Standard
+Por defecto, en nuestro archivo de configuración, tendremos los siguientes
+ niveles de severidad:
+\end_layout
+
+\begin_layout Itemize
+SIG_LOW       = 33 ;
+\end_layout
+
+\begin_layout Itemize
+SIG_MED       = 66 ;
+\end_layout
+
+\begin_layout Itemize
+SIG_HI        = 100 ;
+\end_layout
+
+\begin_layout Standard
+Como podemos observar definen un entero (del 0 al 100) que representa el
+ nivel de severidad que supondría que algún archivo definido dentro de la
+ regla de nombre 
+\begin_inset Quotes eld
+\end_inset
+
+rulename
+\begin_inset Quotes erd
+\end_inset
+
+ fuese modificado.
+\end_layout
+
+\begin_layout Subsubsection
+Tipos de archivos
+\end_layout
+
+\begin_layout Standard
+Dentro de la definición de una regla, Tripwire permite definir el tipo de
+ cada archivo a revisar para definir la naturaleza de cambio del mismo.
+\end_layout
+
+\begin_layout Standard
+Por defecto, en nuestro archivo de configuración, tendremos los siguientes
+ tipos:
+\end_layout
+
+\begin_layout Itemize
+SEC_LOG = $(Growing) ;
+\end_layout
+
+\begin_deeper
+\begin_layout Itemize
+Representan los archivos cuyos permisos o propietario nunca deberían cambiar
+ pero que crecen.
+\end_layout
+
+\end_deeper
+\begin_layout Itemize
+SEC_BIN = $(ReadOnly) ;
+\end_layout
+
+\begin_deeper
+\begin_layout Itemize
+Representan los binarios que nunca deberían cambiar.
+\end_layout
+
+\end_deeper
+\begin_layout Itemize
+SEC_CONFIG = $(Dynamic) ;
+\end_layout
+
+\begin_deeper
+\begin_layout Itemize
+Representan los directorios o archivos que son cambiados de forma esporádica.
+\end_layout
+
+\end_deeper
+\begin_layout Itemize
+SEC_CRIT = $(IgnoreNone)-SHa ;
+\end_layout
+
+\begin_deeper
+\begin_layout Itemize
+Representan los archivos críticos que nunca deberían cambiar.
+\end_layout
+
+\end_deeper
+\begin_layout Itemize
+SEC_INVARIANT = +tpug ;
+\end_layout
+
+\begin_deeper
+\begin_layout Itemize
+Representan los directorios cuyos permisos o propietario nunca deberían
+ cambiar.
+\end_layout
+
+\end_deeper
+\begin_layout Subsubsection
+Sintaxis
+\end_layout
+
+\begin_layout Standard
+Para configurar este archivo debemos entender primero su sintaxis con un
+ ejemplo de definición de regla.
+\end_layout
+
+\begin_layout LyX-Code
+#
+\end_layout
+
+\begin_layout LyX-Code
+# Critical executables 
+\end_layout
+
+\begin_layout LyX-Code
+# 
+\end_layout
+
+\begin_layout LyX-Code
+( 
+\end_layout
+
+\begin_deeper
+\begin_layout LyX-Code
+rulename = "Root file-system executables", 
+\end_layout
+
+\begin_layout LyX-Code
+severity = $(SIG_HI) 
+\end_layout
+
+\end_deeper
+\begin_layout LyX-Code
+) 
+\end_layout
+
+\begin_layout LyX-Code
+{ 
+\end_layout
+
+\begin_deeper
+\begin_layout LyX-Code
+/bin -> $(SEC_BIN) ; 
+\end_layout
+
+\begin_layout LyX-Code
+/sbin -> $(SEC_BIN) ; 
+\end_layout
+
+\end_deeper
+\begin_layout LyX-Code
+} 
+\end_layout
+
+\begin_layout Standard
+Podemos observar 3 partes diferenciadas.
+\end_layout
+
+\begin_layout Itemize
+La primera parte es un breve comentario que describe la regla.
+\end_layout
+
+\begin_layout Itemize
+La segunda parte está escrita entre paréntesis y define el nombre de la
+ regla (
+\begin_inset Quotes eld
+\end_inset
+
+rulename
+\begin_inset Quotes erd
+\end_inset
+
+) y el nivel de severidad (
+\begin_inset Quotes eld
+\end_inset
+
+severity
+\begin_inset Quotes erd
+\end_inset
+
+).
+\end_layout
+
+\begin_layout Itemize
+La tercera parte está escrita entre corchetes y define una lista de directorios
+ o archivos junto con sus respectivos tipos.
+\end_layout
+
+\begin_layout Part
+Ejecución
+\end_layout
+
+\begin_layout Section
+Instalación del archivo de políticas
+\end_layout
+
+\begin_layout Standard
+Una vez configurado el archivo de políticas debemos generar el archivo cifrado
+ con el que trabajará Tripwire.
+ Usaremos el comando:
+\end_layout
+
+\begin_layout LyX-Code
+# twadmin -m P /etc/tripwire/twpol.txt
+\end_layout
+
+\begin_layout Section
+Generación de la base de datos
+\end_layout
+
+\begin_layout Standard
+Una vez instalado el archivo de políticas debemos general la base de datos
+ con el comando:
+\end_layout
+
+\begin_layout LyX-Code
+#tripwire -m i 2 > /tmp/erroresTripwire
+\end_layout
+
+\begin_layout Standard
+Este comando también escribirá en el archivo /tmp/erroresTripwire una lista
+ de los errores con los que se encontró la aplicación a la hora de generar
+ la base de datos.
+\end_layout
+
+\begin_layout Standard
+Es necesario seguir el siguiente procedimiento hasta que no haya errores
+ en dicho archivo:
+\end_layout
+
+\begin_layout Enumerate
+Generar la base de datos con el comando antes mencionado.
+\end_layout
+
+\begin_layout Enumerate
+Revisar el fichero /tmp/erroresTripwire en busca de errores.
+\end_layout
+
+\begin_layout Enumerate
+Corregir los errores en el archivo de políticas.
+\end_layout
+
+\begin_layout Enumerate
+Instalar de nuevo el archivo de políticas.
+\end_layout
+
+\begin_layout Enumerate
+Volver al paso 1.
+\end_layout
+
+\begin_layout Standard
+Una vez se haya generado la base de datos sin errores se deben borrar los
+ archivos de configuración 
+\begin_inset Quotes eld
+\end_inset
+
+twcfg.txt
+\begin_inset Quotes erd
+\end_inset
+
+ y 
+\begin_inset Quotes eld
+\end_inset
+
+twpol.txt
+\begin_inset Quotes erd
+\end_inset
+
+, habiendo copiado los mismos previamente a un medio seguro, fuera del entorno
+ de nuestra máquina.
+ Esto es muy importante ya que, si estos archivos estubiesen accesibles
+ en nuestra máquina, un atacante podría leerlos y aprovecharse de esta informaci
+ón para evitar su detección.
+\end_layout
+
+\begin_layout Section
+Revisión del sistema
+\end_layout
+
+\begin_layout Standard
+Para ejecutar la revisión del sistema basta ejecutar el comando:
+\end_layout
+
+\begin_layout LyX-Code
+#tripwire -m c > /tmp/informeTripwire
+\end_layout
+
+\begin_layout Standard
+Escribirá un informe en el archivo /tmp/informeTripwire con los resultados
+ de la revisión.
+\end_layout
+
+\begin_layout Standard
+Este paso se llevará a cabo cada vez que el administrador del sistema lo
+ considere oportuno.
+ Debemos tener en cuenta que supone una cierta carga para máquinas de bajo
+ rendimiento como la usada en nuestro entorno por lo tanto se aconseja ejecutar
+ las revisiones en horarios de baja demanda del sistema.
+\end_layout
+
+\begin_layout Bibliography
+\start_of_appendix
+\begin_inset CommandInset bibitem
+LatexCommand bibitem
+key "key-1"
+
+\end_inset
+
+http://www.angelcarrasco.com/tag/tripwire/
+\end_layout
+
+\begin_layout Bibliography
+\begin_inset CommandInset bibitem
+LatexCommand bibitem
+key "key-9"
+
+\end_inset
+
+http://www.escomposlinux.org/lfs-es/blfs-es-5.0/postlfs/tripwire.html
+\end_layout
+
+\begin_layout Bibliography
+\begin_inset CommandInset bibitem
+LatexCommand bibitem
+key "key-10"
+
+\end_inset
+
+http://linux.die.net/man/8/tripwire
+\end_layout
+
+\begin_layout Section*
+Licencia del documento: 
+\end_layout
+
+\begin_layout Paragraph
+Este obra cuyo autor es Pablo López viqueira está sujeta a la licencia Reconocim
+iento-CompartirIgual 4.0 Internacional de Creative Commons.
+ Para ver una copia de esta licencia, visite 
+\begin_inset Flex URL
+status open
+
+\begin_layout Plain Layout
+
+http://creativecommons.org/licenses/by-sa/4.0/deed.es_ES.
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_body
+\end_document
