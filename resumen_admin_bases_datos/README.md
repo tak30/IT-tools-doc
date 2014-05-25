@@ -569,17 +569,64 @@ Podemos distinguir __dos objetivos__ que puede seguir el optimizador:
 
 ##7.1 Motivación y factores que intervienen:
 
+El __diseño físico__ es la descripción de la implementación física de las estructuras lógicas 
+y de los datos de la BD.
+
+El __objetivo__ del diseño físico es lograr una estructuración adecuada de los datos en 
+almacenamiento secundario, garantizando que con ella se obtenga un buen rendimiento en las 
+operaciones a realizar en la BD.
+
+###Factores que intervienen:
+
+*   Las características de los datos y del acceso a los mismos por parte de los usuarios.
+*   Las prestaciones del SGBD, del hardware y del sistema operativo utilizado.
+*   Las características de los datos y del acceso a los mismos por parte de los diferentes
+    usuarios.
+
+    *   Cantidad de datos inicial, crecimiento esperado y frecuencia y ámbito de actualización.
+    *   Las consultas que se realizarán sobre cada tabla y su frecuencia.
+    *   Los requerimientos de tiempo de consultas y transacciones.
+
+*   Las prestaciones del SGBD, del hardware y del sistema operativo utilizado.
+
 
 ##7.2 Tareas involucradas en el diseño físico (especialmente instalación y parametrización, espacio de almacenamiento de la BD e implementación física de las tablas (heap, extensiones, condiciones de particionado, agrupamiento, ...):
 
-##7.3 Recomendaciones a seguir ante diferentes supuestos:
+*   Instalación del SGBD y parametrización del mismo:
+    *   Preparación de la instalación: Estudiar las características del SGBD para aprovecharlas,
+        decidir qué almacenamiento secundario utilizar etc...
+    *   Instalación.
+    *   Parametrización:
+        *   Tamaño de página o bloque que usará la BD.
+        *   Tamaño de memoria destinado a los distintos procesos del SGBD.
+*   Traducción del modelo relacional a las características del SGBD elegido:
+    *   Determinar el espacio de almacenamiento que usará la BD y sus características.
+    *   Implementar las tablas base: Calcular tamaño de la extensión de cada tabla.
+    *   Implementar los datos derivados: Datos calculados que interesa guardar por rendimiento.
+    *   Implementar las restricciones de integridad y las reglas de negocio complejas.
 
 
-##7.4 Casos de estudio: Oracle y SQL Server:
 
 
-##7.5 Monitorización y ajuste:
+##7.3 Casos de estudio: Oracle y SQL Server:
 
+
+##7.4 Monitorización y ajuste:
+
+Monitorizar el sistema consiste en comprobar que el funcionamiento del mismo es el adecuado para los 
+objetivos que se persiguen.  
+Si se detecta cualquier anomalía se procede a su corrección o ajuste.
+
+Entre los elementos que suelen ser más críticos se encuentran:
+
+*   Los tiempos de respuesta ante las operaciones de los usuarios.
+*   La utilización de los recursos del sistema, fundamentalmente memoria, procesador, y sobre todo, 
+    las tasas de transferencia a disco.
+*   La asignación de espacios a los objetos de la BD.
+*   La utilización de índices.
+*   Las estadísticas de bloqueos e incidencias de concurrencia.
+*   La actividad de los ficheros de log.
+*   El porcentaje de llenado de las zonas de almacenamiento temporal.
 
 ---------------------------------------
 
