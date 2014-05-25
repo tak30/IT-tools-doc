@@ -3,7 +3,7 @@
 
 #1. Fundamentos
 
-##1.1 Ideas fundamentales de BD (necesario conocerlas pero no para una pregunta concreta)
+##1.1 Ideas fundamentales de BD. 
 
 ---------------------------------------
 
@@ -69,7 +69,7 @@ las vistas del sistema pertenecientes al esquema sys, en cada base de datos.
 
 ---------------------------------------
 
-#3. Integridad:
+#3. Integridad
 
 ##3.1 Implementación de las condiciones de los datos mediante restricciones de integridad:
 
@@ -163,7 +163,7 @@ Si una restricción es DEFERRABLE, su estado inicial dentro de una transacción 
 
 ---------------------------------------
 
-#4. Vistas:
+#4. Vistas
 
 ##4.1 Tablas y vistas (definición, diferentes tipos de cada una, ejemplos):
 
@@ -248,7 +248,7 @@ Hay __tres escenarios__ en los que habitualmente se utilizan vistas manterializa
 
 ---------------------------------------
 
-#5. Seguridad:
+#5. Seguridad
 
 ##5.1 Requerimientos de seguridad en SGBD (autentificación de usuarios, autorización de acceso):
 
@@ -354,6 +354,263 @@ privilegios de cada rol que tenga.
     una condición, mostrando así a ciertos roles solo las filas que deban ver.
 -   Vistas verticales: Permiten ocultar determinadas columnas de una tabla, mostrando
     así a ciertos roles solo las columnas que deban ver.
+
+---------------------------------------
+
+#6. Optimización
+
+##6.1 Indices (motivación, definición, características, diferentes tipos, ejemplos):
+
+Un __índice__ es una estructura auxiliar que se almacena en disco y que contiene
+los valores ordenados de una o más columnas.
+
+Los índices son usados para acelerar el acceso a los datos en las operaciones
+de consulta.
+
+### Ventajas:
+
+*   Evitan la exploración de toda la zona de almacenamiento de la tabla si se busca
+    un porcentaje reducido del total de filas.
+
+*   Acceder a los datos de una columna que tiene un índice por orden es mucho menos costoso
+    que si no lo tuviese.
+
+### Inconvenientes:
+
+*   Retardan las operaciones de modificación (especialmente ante cargas masivas).
+*   Ocupan espacio en disco.
+*   Si el optimizador no los usa son contraproducentes.
+
+### Tipos de índices:
+
+*   Único / No único: Según la clave de indexación pueda o no tener valores repetidos.
+*   Primario / Secundario: Según la clave de indexación sea la clave primaria o no.
+*   Simple / Compuesto: Según esté definido sobre una única columna o varias.
+*   Árbol-B+ / Bitmap.
+*   Denso / Disperso: Según posea o no una entrada para cada fila de la tabla.
+*   De agrupamiento / No agrupado: Según origine o no una ordenación de los datos de la
+    tabla.
+
+### Sintaxis y ejemplos:
+    
+    CREATE [UNIQUE] INDEX nombre_índice
+    ON tabla (columna1[, columna2, ...])
+
+    CREATE INDEX emp_spr ON emp(cdspr)
+    CREATE UNIQUE INDEX emp_pk ON emp(cdemp)
+    CREATE INDEX emp_ind2 ON emp(salario, comision)
+
+    DROP INDEX nombre_índice
+    
+    DROP INDEX emp_spr
+
+##6.2 Principales tipos de índices: árbol-B y bitmap (características):
+
+### De árbol-B+:
+
+*   Son adecuados si las columnas tienen alta cardinalidad.
+*   La modificación de los valores de sus columnas no supone problemas.
+*   No resultan muy adecuados para consultas con predicados OR y AND.
+*   Son habituales en los entornos operacionales (OLTP).
+
+### Bitmap:
+
+*   Son adecuados si las columnas tienen baja cardinalidad.
+*   La modificación de los valores de sus columnas plantea probleas.
+*   Resultan muy adecuados para consultas con predicados OR y AND.
+*   Son habituales en los entornos analíticos y de soporte a la decisión (OLAP).
+
+##6.3 Elección de los índices y condiciones de utilización por el optimizador:
+
+Oracle permite definir un índice como `VISIBLE` o `INVISIBLE` según el optimizador
+pueda tenerlo en cuenta o no.
+
+Depende de la cardinalidad.
+
+##6.4 Índices en Oracle: 
+
+En oracle los índices defectivos son los de __Árbol-B+__. 
+Existen también unos índices llamados de __clave inversa__ que invierten los bytes
+de cada columna incluida en el índice. Son útiles si se realizan modificaciones
+reiteradamente sobre los mismos nodos hoja.
+
+Los índices __bitmap__ usan una estructura de árbol pero en los nodos hoja almacenan
+cadenas de bits. Para cada valor de la clave de indexación el índice almacena una lista
+con los bits 1 y 0, indicando así las diferentes filas que poseen (1) o no (0) dicho
+valor.
+
+###Otros:
+
+*   Index-Organized tables (de agrupamiento).
+*   Árbol-B cluster.
+*   Hash cluster.
+
+
+##6.5 Proceso de optimización:
+
+*   Obtención de la forma intermedia de la consulta:
+
+    *   Transformar la consulta en una representación interna:
+    
+    Consiste en transformar la consulta expresada en un lenguaje de alto nivel, a una representación
+    interna, sin las connotaciones propias del nivel externo y que se manipule mejor por el SGBD.
+
+    *   Convertirla a forma canónica.
+
+    Se convierte la consulta expresada en una representación interna a una forma canónica con el objetivo
+    de encontrar otra representación de la misma consulta pero que sea más eficiente.
+
+*   Obtención del plan de ejecución:
+
+    *   Elegir procedimientos candidatos de bajo nivel.
+    
+    Cada operación de bajo nivel tiene asociados varios procedimientos de implementación,
+    cada uno conlleva una fórmula de coste.
+
+    *   Generar planes de consulta y elegir el de menor coste.
+    
+    Cada plan de consulta se genera combinando un conjunto de procedimientos de implementación
+    a bajo nivel. Cada uno tiene asociado un coste y se elegirá el de menor coste.
+
+##6.6 Reglas heurísticas y su aplicación:
+
+La optimización basada en reglas heurísticas consiste en ordenar las operaciones del árbol
+de consulta, para obtener una mejora del rendimiento, utilizando normas basadas en el ingenio
+y en el sentido común.
+
+Las fundamentales son:
+
+*   Realizar las selecciones tan pronto como sea posible.
+*   Sustituir selecciones y producto cartesiano por joins, cuando pueda realizarse.
+*   Combinar secuencias de operaciones unarias, tales como selecciones o proyecciones, en una
+    única selección o proyección.
+*   Buscar expresiones comunes para poder evaluarlas una única vez.
+*   Si hay varios joins o selecciones, realizar primero las más restrictivas.
+*   Eliminar en cuanto se pueda los atributos no necesarios mediante proyecciones.
+
+##6.7 Algoritmos de join (características, condiciones involucradas, joins en SQL Server):
+
+*   Bucle anidado (nested loop join): Dos bucles anidados.
+*   Bucle anidado por bloques (block nested loop join).
+*   Bucle anidado indexado (indexed nested loop join): Si se dispone de índice se usa el índice.
+*   Clasificación-fusión (sort-merge join): Si las relaciones del join están ordenadas por los
+    atributos implicados en el mismo, se buscan los coincidentes y se fusiona.
+*   Función de hash (hash join): Se aplica una función de hash de forma que se particionan las tuplas.
+
+En __SQL Server__:
+
+*   Nested loop join.
+*   Merge join.
+*   Hash join.
+
+##6.8 Optimización en Oracle 11 (modo de funcionamiento, acceso a tablas, operaciones de los planes de ejecución Oracle -vistas en los ejercicios-, hints principales):
+
+Oracle 11 utiliza un optimizador basado fundamentalmente en costes (CBO).
+
+Podemos distinguir __dos objetivos__ que puede seguir el optimizador:  
+
+*   Rendimiento: Minimiza los recursos utilizados para acceder a todas las filas implicadas.
+*   Tiempo de respuesta: Minimiza los recursos para obtener las primeras filas implicadas.
+
+###Modos de funcionamiento:  
+
+*   `ALL_ROWS`: Objetivo de rendimiento.
+*   `FIRST_ROWS_n`: Objetivo de tiempo de respuesta.
+*   `FiRST_ROWS`: Mezcla de coste y heurística con el objetivo de obtener las primeras filas.
+
+###Acceso a las tablas:  
+
+*   Exploración completa de la tabla:
+    *   Imposibilidad de usar un índice.
+    *   Gran volumen de datos.
+    *   Tabla muy pequeña.
+    *   Estadísticas obsoletas.
+    *   Alto grado de paralelismo.
+    *   Sintaxis: `/* FULL(emp) */`
+
+*   Índice:  
+    *   Único.
+    *   Por rango.
+
+*   Rowid: 
+    *   Después de obtener el rowid de un índice.
+
+###Operaciones vistas en los ejercicios:
+
+
+###Hints:
+
+*   Modo de optimización:
+        
+    *   `/* ALL_ROWS */`
+    *   `/* FIRST_ROWS (n) */`
+
+*   Acceso a datos:
+    
+    *   `/* CLUSTER (tb) */`
+    *   `/* FULL(tabla) */`
+    *   `/* INDEX(tabla [indice]) */`
+    *   `/* NO_INDEX(tabla [indice]) */`
+    *   `/* INDEX_ASC(tabla [indice])*/`
+
+*   Orden de join:
+    
+    *   `/* ORDERED */`
+
+*   Tipo de join:
+
+    *   `/* USE_HASH(tb1 tb2) */`
+    *   `/* USE_MERGE(tb1 tb2) */`
+    *   `/* USE_NL(tb1 tb2) */`
+
+---------------------------------------
+
+#7. Diseño físico
+
+##7.1 Motivación y factores que intervienen:
+
+
+##7.2 Tareas involucradas en el diseño físico (especialmente instalación y parametrización, espacio de almacenamiento de la BD e implementación física de las tablas (heap, extensiones, condiciones de particionado, agrupamiento, ...):
+
+##7.3 Recomendaciones a seguir ante diferentes supuestos:
+
+
+##7.4 Casos de estudio: Oracle y SQL Server:
+
+
+##7.5 Monitorización y ajuste:
+
+
+---------------------------------------
+
+#8. Transacciones y recuperación
+
+##8.1 Transacción (concepto, propiedades y fases):
+
+
+##8.2 Fichero de log (características, tipos):
+
+
+##8.3 Proceso de confirmación y protocolo de escrituras anticipadas:
+
+
+##8.4 Puntos de verificación (motivación, características, mecanismo de funcionamiento):
+
+
+##8.5 Política de salvaguarda ante fallo de dispositivo:
+
+
+##8.6 Política de salvaguarda total:
+
+
+##8.8 Oracle: elementos relacionados con la recuperación -también lo visto en los ejercicios-:
+
+
+---------------------------------------
+
+#9. Concurrencia
+
+##9.1 Problemas de concurrencia, niveles de aislamiento y relación entre ellos:
 
 
 ---------------------------------------
