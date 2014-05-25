@@ -355,3 +355,10 @@ privilegios de cada rol que tenga.
 -   Vistas verticales: Permiten ocultar determinadas columnas de una tabla, mostrando
     así a ciertos roles solo las columnas que deban ver.
 
+
+---------------------------------------
+
+Licencia del documento: 
+========================
+
+#### Este obra cuyo autor es Pablo López viqueira está sujeta a la licencia Reconocimiento-CompartirIgual 4.0 Internacional de Creative Commons. Para ver una copia de esta licencia, visite <http://creativecommons.org/licenses/by-sa/4.0/deed.es_ES.>
