@@ -96,7 +96,7 @@ implementa específicamente:
 *   De clave primaria (PRIMARY KEY).
 *   De clave foránea (REFERENCES).
 *   De valor no nulo (NOT NULL).
-*   De unicidad (UNIQUE).
+*   De unicidad (UNIQUE)
 *   De check (CHECK COND):
     +   Sobre un atributo.
     +   Sobre una fila.
@@ -149,7 +149,7 @@ Si una restricción es DEFERRABLE, su estado inicial dentro de una transacción 
 *   No implementa dominios.
 *   Restricciones:
     *   NOT NULL.
-    *   UNIQUE.
+    *   UNIQUE. (Permite varios NULLS).
     *   PRIMARY KEY.
     *   FOREIGN KEY.
     *   CHECK.
@@ -490,12 +490,13 @@ Las fundamentales son:
 
 ##6.7 Algoritmos de join (características, condiciones involucradas, joins en SQL Server):
 
-*   Bucle anidado (nested loop join): Dos bucles anidados.
+*   Bucle anidado (nested loop join): Dos bucles anidados (para condiciones de desigualdad).
 *   Bucle anidado por bloques (block nested loop join).
 *   Bucle anidado indexado (indexed nested loop join): Si se dispone de índice se usa el índice.
 *   Clasificación-fusión (sort-merge join): Si las relaciones del join están ordenadas por los
-    atributos implicados en el mismo, se buscan los coincidentes y se fusiona.
+    atributos implicados en el mismo, se buscan los coincidentes y se fusiona (cond. desigualdad).
 *   Función de hash (hash join): Se aplica una función de hash de forma que se particionan las tuplas.
+    (No necesita índices pero si tiene los aprovecha).
 
 En __SQL Server__:
 
@@ -634,24 +635,127 @@ Entre los elementos que suelen ser más críticos se encuentran:
 
 ##8.1 Transacción (concepto, propiedades y fases):
 
+Una __transacción__ es una secuencia de operaciones que forman una unidad de ejecución
+consistente de la BD. Finaliza con un COMMIT o un ROLLBACK.
+
+### Propiedades ACID:
+
+*   Atomicidad: Todas las operaciones se ejecutan o no se ejecuta ninguna.
+*   Consistencia: Las transformaciones de una transacción preservan la consistencia de la BD.
+*   Aislamiento: Las transacciones están aisladas unas de otras.
+*   Durabilidad o persistencia: Una vez que una transacción se confirma, las modificaciones
+    que produjo se hacen consistentes en la BD.
+
+### Fases de una transacción:
+
+*   __Activa__: Desde el momento que comienza, mientras realiza las modificaciones.
+*   __Parcialmente completa__: Si se ha solicitado commit, pero todavía no ha consolidado los cambios.
+*   __Completa__: Una vez que ha confirmado los cambios.
+*   __Fracasada__: Entra en esa fase cuando se solicita un ROLLBACK o cuando se detecta un error que
+    le impide continuar (se fuerza un ROLLBACK).
+*   __Abortada__: Después de la anulación de todos los cambios por ella producidos.
 
 ##8.2 Fichero de log (características, tipos):
 
+Un __fichero de log__ consiste es uno o varios ficheros de pequeño tamaño que almacenan referencias
+de cada modificación realizada en la BD.
+
+### Tipos:
+
+*   __Logs con actualizaciones diferidas__: Se registran las modificaciones en el buffer del fichero
+    de log, sin modificar los buffers de la BD hasta el momento de la confirmación.
+*   __Logs con actualizaciones inmediatas__: Se registran las modificaciones en el buffer del fichero
+    de log y también en los buffers de la BD, sin esperar al momento de confirmación.
 
 ##8.3 Proceso de confirmación y protocolo de escrituras anticipadas:
 
+Dentro del proceso de confirmación tenemos cuatro principales estrategias de volcado de los buffers
+a disco:
+
+*   __No robar__: Si una página actualizada del buffer de la BD no puede escribirse al disco antes 
+    de la confirmación de la transacción.
+*   __Robar__: Si una página actualizada del buffer de la BD puede escribirse al disco antes de la 
+    confirmación de la transacción.
+*   __Forzar__: Si todas las páginas actualizadas en el buffer de la BD por una transacción, 
+    se escriben a disco en cuanto se confirma la transacción.
+*   __No forzar__: Si no todas las páginas actualizadas en el buffer de la BD por una transacción, 
+    se escriben a disco en cuanto se confirma la transacción.
+
+###Protocolo de escrituras anticipadas (write-ahead logging: WAL):
+
+El buffer del fichero de log debe grabarse a disco antes de completar la confirmación de
+una transacción.
+
+Antes de modificar un dato en la BD física, las imágenes anteriores se grabarán en el fichero de log.
 
 ##8.4 Puntos de verificación (motivación, características, mecanismo de funcionamiento):
 
+Un __Punto de verificación__ es un instante en el que se fuerza a grabar los cambios de los buffers
+de la BD al disco.
+Tienen como objetivo reducir el tiempo de recuperación y liberar los ficheros de log.
+
+###Consiste en:
+
+*   Suspender temporalmente la ejecución de las transacciones en curso.
+*   Grabar los buffers del fichero de log en el fichero de log.
+*   Grabar los buffers de la BD en la BD física.
+*   Grabar un registro de checkpoint en el fichero de log.
+*   Restaurar la ejecución de las transacciones.
 
 ##8.5 Política de salvaguarda ante fallo de dispositivo:
 
+Implica restaurar la BD de la última copia de seguridad, y usar el fichero de log para completar la 
+recuperación hasta los instantes inmediatos al error.
 
 ##8.6 Política de salvaguarda total:
 
+*   Sincronizar tamaños de fichero de logs con tamaño de backups.
+*   Los ficheros de log tienen que estar en un dispositivo de almacenamiento
+    distinto del que almacena la BD y el SGBD.
+*   Usar herramientas adicionales de backup.
+*   Usar flashbackquery si estás en oracle.
+*   Backups incrementales cada día en el momento de menor carga y completos cada 15 días.
+*   Guardar los backups completos en un edificio diferente, usando almacenamiento no deteriorable
+    como cinta.
 
 ##8.8 Oracle: elementos relacionados con la recuperación -también lo visto en los ejercicios-:
 
+###Final de una transacción:
+
+Una transacción finaliza confirmando sus cambios si:
+
+*   Se ejecuta un commit.
+*   Se ejecuta una sentencia DDL o una DCL.
+*   Se produce una desconexión normal del SGBD.
+
+Una transacción finaliza anulando sus cambios si:
+
+*   Se produce un ROLLBACK.
+*   Se produce una terminación anormal de la sesión.
+
+###Modo AUTOCOMMIT.
+
+Oracle trata cada DML como una transacción que intentará confirmarla tras su ejecución.
+
+### Estados de una transacción:
+
+*   Enable/Disable.
+*   DEFERREABLE/NOT DEFERREABLE.
+*   INITIALLY DEFERRED/INITIALLY INMEDIATE.
+
+### Puntos de recuperación (SAVEPOINTS):
+
+Los SAVEPOINT o puntos de recuperación o de restauración o de salvado parcial de una transacción, 
+son marcas dentro de una transacción que permiten realizar un ROLLBACK hasta ese punto, sin 
+finalizar la transacción.
+
+Si en el curso de una transacción se define un punto de recuperación con:
+
+    SAVEPOINT <punto de recuperación>
+
+puede hacerse que se anulen los cambios posteriores a ese momento y que la transacción continúe mediante:
+
+    ROLLBACK TO <punto de recuperación>
 
 ---------------------------------------
 
@@ -659,6 +763,45 @@ Entre los elementos que suelen ser más críticos se encuentran:
 
 ##9.1 Problemas de concurrencia, niveles de aislamiento y relación entre ellos:
 
+###Problemas de concurrencia:
+
+*   __Pérdida de actualización__: Se produce si dos transacciones realizan la lectura del mismo valor de
+    un dato, y luego ambas lo modifican de forma independiente.
+*   __Dependencia de actualización no confirmada (lectura sucia)__: Se produce al modificar una transacción
+    un dato, acceder después otra transacción a ese dato modificado, y posteriormente anular sus cambios
+    la primera transacción.
+*   __Aparición de inconsistencias__: Se producen por violaciones de restricciones de integridad, debidas
+    al aceder una transacción a un estado transitorio de la BD en el que no se verifica esa transacción.
+*   __Problema del fantasma__: Se produce al añadir una transacción en alguna fila un dato que hace que
+    cumpla una condición expresada en otra transacción concurrente.
+
+###Niveles de aislamiento:
+
+*   __SERIALIZABLE__: El SGBD garantiza que el efecto de la ejecución concurrente es el mismo que si la
+    ejecución fuera en serie.  
+    Problemas:
+
+        *   Ninguno.
+
+*   __REPEATABLE READ__: Sólo permite leer valores confirmados y además requiere que entre dos lecturas
+    de un dato, ninguna otra transacción lo modifique.  
+    Problemas:
+
+        *   Fantasmas.
+
+*   __READ COMMITED__: Sólo permite leer valores confirmados, pero no requiere que entre dos lecturas de
+    un dato, ninguna otra transacción lo modifique.  
+    Problemas:
+
+        *   Inconsistencias.
+        *   Fantasmas.
+
+*   __READ UNCOMMITED__: Permite leer incluso valores no confirmados.  
+    Problemas:
+
+        *   No confirmado.  
+        *   Inconsistencias.
+        *   Fantasmas.
 
 ---------------------------------------
 
